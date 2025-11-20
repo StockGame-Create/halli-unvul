@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔔 할리갈리 UNVUL Edition</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #4ade80 0%, #60a5fa 50%, #a855f7 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            flex-shrink: 0;
+        }
+        .header h1 { font-size: 32px; margin-bottom: 6px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .message-box {
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 10px 15px;
+            font-size: 16px;
+            color: white;
+            font-weight: 500;
+            min-height: 28px;
+        }
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+            min-height: 0;
+        }
+        .player-area {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 12px;
+            color: white;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+        .player-area.active {
+            background: rgba(255, 255, 255, 0.35);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            transform: scale(1.02);
+        }
+        .player-area.p2 { transform: scaleY(-1); }
+        .player-area.p2.active { transform: scaleY(-1) scale(1.02); }
+        .player-area.p2 * { transform: scaleY(-1); }
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+        .player-title { font-weight: bold; font-size: 16px; }
+        .player-stats { display: flex; gap: 15px; font-size: 14px; }
+        .cards-and-button {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            min-height: 130px;
+        }
+        .pile-wrapper {
+            width: 100px;
+            height: 130px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .card {
+            width: 80px;
+            height: 115px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+            border: 2px solid;
+            position: relative;
+            flex-wrap: wrap;
+            overflow: hidden;
+        }
+        .card-fruit { background: white; border-color: #d1d5db; position: relative; }
+        .card-unvul {
+            background: linear-gradient(135deg, #fbbf24 0%, #f97316 100%);
+            border-color: #fcd34d;
+            color: white;
+            flex-direction: column;
+        }
+        .fruit-emoji { position: absolute; font-size: 18px; }
+        .card-unvul-content { display: flex; flex-direction: column; align-items: center; gap: 3px; z-index: 10; }
+        .card-unvul-star { font-size: 20px; }
+        .card-unvul-number { font-size: 18px; }
+        .pile-count {
+            color: white;
+            margin-top: 6px;
+            font-weight: bold;
+            background: rgba(255,255,255,0.2);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: inline-block;
+        }
+        button {
+            padding: 10px 18px;
+            font-size: 13px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+        button:hover:not(:disabled) { transform: scale(1.08) translateY(-2px); }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
+        .flip-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%);
+            color: white;
+            min-width: 100px;
+        }
+        .reset-btn {
+            background: linear-gradient(135deg, #475569 0%, #1e293b 100%);
+            color: white;
+        }
+        .bell-area { text-align: center; padding: 12px; flex-shrink: 0; }
+        .bell-button {
+            background: none;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            width: 120px;
+            height: 120px;
+        }
+        .bell {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            border-radius: 50% 50% 35% 35%;
+            margin: 0 auto 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 3px solid #fcd34d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            transition: all 0.1s;
+        }
+        .bell-button:hover .bell { transform: scale(1.1); }
+        .bell-button.success .bell { background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-color: #6ee7b7; }
+        .bell-button.fail .bell { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border-color: #fca5a5; animation: shake 0.5s; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10% { transform: translateX(-10px); }
+            20% { transform: translateX(10px); }
+            30% { transform: translateX(-10px); }
+            40% { transform: translateX(10px); }
+            50% { transform: translateX(-10px); }
+        }
+        .bell-label { color: white; font-size: 15px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .rules {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 10px;
+            color: white;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        .rules h3 { font-size: 13px; margin-bottom: 5px; }
+        .rules li { list-style: none; margin-bottom: 3px; }
+        .rules li::before { content: '• '; margin-right: 4px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 할리언벌</h1>
+            <div class="message-box" id="message">게임 시작!</div>
+        </div>
+
+        <div class="game-area">
+            <div class="player-area p2" id="player2Area">
+                <div class="player-header">
+                    <div class="player-title">Player 2</div>
+                    <div class="player-stats">
+                        <span>덱: <span id="p2DeckCount">0</span></span>
+                        <span>획득: <span id="p2WonCount">0</span></span>
+                    </div>
+                </div>
+                <div class="cards-and-button">
+                    <button class="flip-btn" id="p2FlipBtn">카드 뒤집기</button>
+                    <div class="pile-wrapper">
+                        <div id="p2PileCard"></div>
+                        <div id="p2PileCount" class="pile-count"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bell-area">
+                <button class="bell-button" id="bellBtn">
+                    <div class="bell">🔔</div>
+                    <div class="bell-label">종 치기</div>
+                </button>
+            </div>
+
+            <div class="player-area" id="player1Area">
+                <div class="player-header">
+                    <div class="player-title">Player 1</div>
+                    <div class="player-stats">
+                        <span>덱: <span id="p1DeckCount">0</span></span>
+                        <span>획득: <span id="p1WonCount">0</span></span>
+                    </div>
+                </div>
+                <div class="cards-and-button">
+                    <div class="pile-wrapper">
+                        <div id="p1PileCard"></div>
+                        <div id="p1PileCount" class="pile-count"></div>
+                    </div>
+                    <button class="flip-btn" id="p1FlipBtn">카드 뒤집기</button>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="reset-btn" id="resetBtn">새 게임</button>
+            </div>
+
+            <div class="rules">
+                <h3>📋 규칙</h3>
+                <ul>
+                    <li>과일 5개 = 종 치기!</li>
+                    <li>★ 별카드는 개수에 포함</li>
+                    <li>가짜카드는 무시</li>
+                    <li>실수 = 상대에게 카드 1장</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const FRUITS = ['🍓', '🍌', '🥝', '🍇'];
+        const FRUIT_NAMES = ['딸기', '바나나', '라임', '자두'];
+
+        let gameState = {
+            player1Deck: [],
+            player2Deck: [],
+            player1Pile: [],
+            player2Pile: [],
+            player1Won: [],
+            player2Won: [],
+            currentPlayer: 1,
+            gameOver: false
+        };
+
+        function createDeck() {
+            const deck = [];
+            FRUITS.forEach((fruit, idx) => {
+                for (let count = 1; count <= 5; count++) {
+                    for (let i = 0; i < 4; i++) {
+                        deck.push({ type: 'fruit', fruit, count, name: FRUIT_NAMES[idx] });
+                    }
+                }
+            });
+            deck.push({ type: 'unvul', count: 2 });
+            deck.push({ type: 'unvul', count: 3 });
+            FRUITS.forEach((fruit, idx) => {
+                deck.push({ type: 'fake', fruit, count: 10, name: FRUIT_NAMES[idx] });
+            });
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            return deck;
+        }
+
+        function renderCard(card) {
+            if (!card) return '';
+            if (card.type === 'unvul') {
+                return `<div class="card card-unvul"><div class="card-unvul-content"><div class="card-unvul-star">★</div><div class="card-unvul-number">${card.count}</div></div></div>`;
+            }
+            if (card.type === 'fruit' || card.type === 'fake') {
+                const positions = {
+                    1: [[50, 50]],
+                    2: [[30, 50], [70, 50]],
+                    3: [[50, 25], [30, 70], [70, 70]],
+                    4: [[30, 30], [70, 30], [30, 70], [70, 70]],
+                    5: [[30, 30], [70, 30], [50, 50], [30, 70], [70, 70]],
+                    10: [[20, 15], [40, 15], [60, 15], [80, 15], [20, 35], [40, 35], [60, 35], [80, 35], [30, 70], [70, 70]]
+                };
+                const pos = positions[card.count] || [];
+                const fruits = pos.map(([x, y]) => `<div class="fruit-emoji" style="left: ${x}%; top: ${y}%; transform: translate(-50%, -50%);">${card.fruit}</div>`).join('');
+                return `<div class="card card-fruit">${fruits}</div>`;
+            }
+            return '';
+        }
+
+        function flipCard(player) {
+            if (gameState.gameOver) return;
+            if (player === 1) {
+                if (gameState.player1Deck.length === 0) { setMessage('P1 카드 없음!'); return; }
+                const card = gameState.player1Deck.shift();
+                gameState.player1Pile.unshift(card);
+                gameState.currentPlayer = 2;
+                setMessage('P2 차례');
+            } else {
+                if (gameState.player2Deck.length === 0) { setMessage('P2 카드 없음!'); return; }
+                const card = gameState.player2Deck.shift();
+                gameState.player2Pile.unshift(card);
+                gameState.currentPlayer = 1;
+                setMessage('P1 차례');
+            }
+            updateUI();
+        }
+
+        function checkWinCondition() {
+            const visibleCards = [];
+            if (gameState.player1Pile.length > 0) visibleCards.push(gameState.player1Pile[0]);
+            if (gameState.player2Pile.length > 0) visibleCards.push(gameState.player2Pile[0]);
+            if (visibleCards.length === 0) return false;
+            const realCards = visibleCards.filter(card => card.type !== 'fake');
+            const fruitCounts = {};
+            let unvulCount = 0;
+            realCards.forEach(card => {
+                if (card.type === 'unvul') {
+                    unvulCount += card.count;
+                } else if (card.type === 'fruit') {
+                    fruitCounts[card.name] = (fruitCounts[card.name] || 0) + card.count;
+                }
+            });
+            for (let fruit in fruitCounts) {
+                if (fruitCounts[fruit] + unvulCount === 5) return true;
+            }
+            return unvulCount === 5;
+        }
+
+        function ringBell() {
+            if (gameState.gameOver) return;
+            const isCorrect = checkWinCondition();
+            const bellBtn = document.getElementById('bellBtn');
+            if (isCorrect) {
+                bellBtn.classList.add('success');
+                const allCards = [...gameState.player1Pile, ...gameState.player2Pile];
+                if (gameState.currentPlayer === 1) {
+                    gameState.player1Deck.push(...allCards);
+                    setMessage(`🎉 P1 성공! ${allCards.length}장 획득!`);
+                } else {
+                    gameState.player2Deck.push(...allCards);
+                    setMessage(`🎉 P2 성공! ${allCards.length}장 획득!`);
+                }
+                gameState.player1Pile = [];
+                gameState.player2Pile = [];
+                setTimeout(() => {
+                    bellBtn.classList.remove('success');
+                    updateUI();
+                    if (gameState.player1Deck.length === 0 || gameState.player2Deck.length === 0) {
+                        endGame();
+                    } else {
+                        gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+                        setMessage(`다음 차례: P${gameState.currentPlayer}`);
+                    }
+                }, 1000);
+            } else {
+                bellBtn.classList.add('fail');
+                if (gameState.currentPlayer === 1) {
+                    if (gameState.player1Deck.length > 0) {
+                        const penalty = gameState.player1Deck.shift();
+                        gameState.player2Deck.push(penalty);
+                        setMessage(`❌ P1 실수! P2에게 1장`);
+                    }
+                } else {
+                    if (gameState.player2Deck.length > 0) {
+                        const penalty = gameState.player2Deck.shift();
+                        gameState.player1Deck.push(penalty);
+                        setMessage(`❌ P2 실수! P1에게 1장`);
+                    }
+                }
+                setTimeout(() => {
+                    bellBtn.classList.remove('fail');
+                    updateUI();
+                }, 500);
+            }
+        }
+
+        function endGame() {
+            const p1Total = gameState.player1Deck.length;
+            const p2Total = gameState.player2Deck.length;
+            gameState.gameOver = true;
+            if (p1Total > 0 && p2Total === 0) {
+                setMessage(`🏆 P1 승리! P2가 카드를 모두 잃음!`);
+            } else if (p2Total > 0 && p1Total === 0) {
+                setMessage(`🏆 P2 승리! P1이 카드를 모두 잃음!`);
+            } else {
+                setMessage(`게임 종료!`);
+            }
+            updateUI();
+        }
+
+        function setMessage(msg) {
+            document.getElementById('message').textContent = msg;
+        }
+
+        function updateUI() {
+            document.getElementById('p1DeckCount').textContent = gameState.player1Deck.length;
+            document.getElementById('p1WonCount').textContent = gameState.player1Won.length;
+            document.getElementById('p1PileCard').innerHTML = gameState.player1Pile.length > 0 ? renderCard(gameState.player1Pile[0]) : '';
+            document.getElementById('p1PileCount').textContent = gameState.player1Pile.length > 0 ? `${gameState.player1Pile.length}장` : '';
+            document.getElementById('p2DeckCount').textContent = gameState.player2Deck.length;
+            document.getElementById('p2WonCount').textContent = gameState.player2Won.length;
+            document.getElementById('p2PileCard').innerHTML = gameState.player2Pile.length > 0 ? renderCard(gameState.player2Pile[0]) : '';
+            document.getElementById('p2PileCount').textContent = gameState.player2Pile.length > 0 ? `${gameState.player2Pile.length}장` : '';
+            document.getElementById('bellBtn').disabled = gameState.gameOver;
+            const player1Area = document.getElementById('player1Area');
+            const player2Area = document.getElementById('player2Area');
+            if (gameState.currentPlayer === 1 && !gameState.gameOver) {
+                player1Area.classList.add('active');
+                player2Area.classList.remove('active');
+            } else if (gameState.currentPlayer === 2 && !gameState.gameOver) {
+                player2Area.classList.add('active');
+                player1Area.classList.remove('active');
+            } else {
+                player1Area.classList.remove('active');
+                player2Area.classList.remove('active');
+            }
+            document.getElementById('p1FlipBtn').style.display = gameState.currentPlayer === 1 && !gameState.gameOver ? 'block' : 'none';
+            document.getElementById('p2FlipBtn').style.display = gameState.currentPlayer === 2 && !gameState.gameOver ? 'block' : 'none';
+        }
+
+        function initGame() {
+            const newDeck = createDeck();
+            const mid = Math.floor(newDeck.length / 2);
+            gameState = {
+                player1Deck: newDeck.slice(0, mid),
+                player2Deck: newDeck.slice(mid),
+                player1Pile: [],
+                player2Pile: [],
+                player1Won: [],
+                player2Won: [],
+                currentPlayer: 1,
+                gameOver: false
+            };
+            updateUI();
+            setMessage('게임 시작! P1 차례');
+        }
+
+        document.getElementById('p1FlipBtn').addEventListener('click', () => flipCard(1));
+        document.getElementById('p2FlipBtn').addEventListener('click', () => flipCard(2));
+        document.getElementById('bellBtn').addEventListener('click', ringBell);
+        document.getElementById('resetBtn').addEventListener('click', initGame);
+
+        initGame();
+    </script>
+</body>
+</html>
